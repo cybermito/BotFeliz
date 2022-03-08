@@ -1,6 +1,13 @@
+import logging
+from telegram.ext import Updater, CallbackContext, CommandHandler, MessageHandler
+from telegram import Update
 import requests
-from constantes import API_KEY
+from constantes import API_KEY, CYBERMITOTOKEN
 from PIL import Image
+
+#Creamos el sistema de logs para obtener información de los posibles errores.
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+
 
 # This function will pass your text to the machine learning model
 # and return the top result with the highest confidence
