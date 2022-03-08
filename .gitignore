@@ -127,3 +127,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#Añadimos nuestros de keys
+constantes.py
+Constantes.py
+Keys.py
+keys.py
+constant.py
+Constant.py
