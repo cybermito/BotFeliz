@@ -1,5 +1,5 @@
 import logging
-from telegram.ext import Updater, CallbackContext, CommandHandler, MessageHandler
+from telegram.ext import Updater, CallbackContext, CommandHandler, MessageHandler, Filters
 from telegram import Update
 import requests
 from constantes import API_KEY, CYBERMITOTOKEN
@@ -8,9 +8,36 @@ from PIL import Image
 #Creamos el sistema de logs para obtener información de los posibles errores.
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
+#Creamos los objetos updater y dispatcher para la conexión con el Bot
+updater = Updater(token=CYBERMITOTOKEN, use_context=True)
+dispatcher = updater.dispatcher
+
+#Definimos las funciones que se ejecutarán con los comandos /start, /adios, /help
+def start(update: Update, context: CallbackContext):
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Hola, soy un bot en aprendizaje, dime algo y te responderé")
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Escribe /help para obtener ayuda en el funcionamiento")
+    siEntrenado = checkModel(API_KEY)
+
+    if siEntrenado['status'] == 'ready to use':
+        context.bot.send_message(chat_id=update.effective_chat.id, text="¿Que quieres decirme?")
+        
+        #texto = input('¿Que quieres decirme? ')
+    
+    else:
+        context.bot.send_messsage(chat_id=update.effective_chat.id, text=siEntrenado)
+        print(siEntrenado)
+
+
+def mensajeRecibido(update: Update, context:CallbackContext):
+    texto = update.message.text
+    print(texto)
+    recognized = classify(texto)
+    if recognized != None:
+        respuesta(recognized)
 
 # This function will pass your text to the machine learning model
-# and return the top result with the highest confidence
+# and return the top result with the highest confidence.
+
 
 def storeText(key, text, label):
   #checkApiKey(key)
@@ -168,16 +195,15 @@ def respuesta(recognized):
 
 def run():
 
-    siEntrenado = checkModel(API_KEY)
+    start_handler = CommandHandler('start', start)
+    dispatcher.add_handler(start_handler)
 
-    if siEntrenado['status'] == 'ready to use':
-        texto = input('¿Que quieres decirme? ')
+    mensajeRecibido_handler = MessageHandler(Filters.text & (~Filters.command), mensajeRecibido)
+    dispatcher.add_handler(mensajeRecibido_handler)
+        
 
-        recognized = classify(texto)
-        if recognized != None:
-            respuesta(recognized)
-    else:
-        print(siEntrenado)
+    updater.start_polling()
+    updater.idle()
     
 
 if __name__ == '__main__':
