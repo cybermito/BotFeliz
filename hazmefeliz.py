@@ -27,18 +27,47 @@ def start(update: Update, context: CallbackContext):
         context.bot.send_messsage(chat_id=update.effective_chat.id, text=siEntrenado)
         print(siEntrenado)
 
+def help(update: Update, context: CallbackContext):
+    mensaje="Este bot responde a las emociones que le crean las palabras o frases que se le diga"
+    mensaje2="Si le dices cosas que no le gustan, se pondrá triste y si, sí le gustan, se pondra alegre"
+    context.bot.send_message(chat_id=update.effective_chat.id, text=mensaje)
+    context.bot.send_message(chat_id=update.effective_chat.id, text=mensaje2)
 
-def mensajeRecibido(update: Update, context:CallbackContext):
+def adios(update: Update, context: CallbackContext):
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Que pena que te vayas. Voy a desconectarme")
+    updater.stop() 
+
+
+def mensajeRecibido( update: Update, context:CallbackContext):
+    def respuesta(recognized):
+
+        label = recognized['class_name']
+
+        if label == "cosas_buenas":
+            context.bot.send_message(chat_id=update.effective_chat.id, text="Muchas gracias, eres muy agradable")
+            print("Muchas gracias, eres muy agradable")
+            img = Image.open('img/feliz.png')
+            #print(img) #<PIL.PngImagePlugin.PngImageFile image mode=RGB size=640x438 at 0x7F0D12A351F0>
+            debug=img.show()
+            #print(debug)
+
+        else:
+            context.bot.send_message(chat_id=update.effective_chat.id, text="No me ha gustado lo que has dicho")
+            print("No me ha gustado lo que has dicho")
+            img = Image.open('img/triste.png')
+            #print(img)
+            debug=img.show()
+            #print(debug)
+
     texto = update.message.text
     print(texto)
     recognized = classify(texto)
     if recognized != None:
         respuesta(recognized)
 
+
 # This function will pass your text to the machine learning model
 # and return the top result with the highest confidence.
-
-
 def storeText(key, text, label):
   #checkApiKey(key)
     
@@ -164,25 +193,6 @@ def classify(text):
     else:
         response.raise_for_status()
 
-def respuesta(recognized):
-
-    label = recognized['class_name']
-
-    if label == "cosas_buenas":
-        print("Muchas gracias, eres muy agradable")
-        img = Image.open('img/feliz.png')
-        #print(img) #<PIL.PngImagePlugin.PngImageFile image mode=RGB size=640x438 at 0x7F0D12A351F0>
-        debug=img.show()
-        #print(debug)
-
-    else:
-        print("No me ha gustado lo que has dicho")
-        img = Image.open('img/triste.png')
-        #print(img)
-        debug=img.show()
-        #print(debug)
-
-
 
 # Cambiamos a partir de aquí la forma de usar el módelo de entrenamiento. 
 #demo = classify("Eres bonito")
@@ -197,6 +207,12 @@ def run():
 
     start_handler = CommandHandler('start', start)
     dispatcher.add_handler(start_handler)
+
+    help_handler = CommandHandler('help', help)
+    dispatcher.add_handler(help_handler)
+
+    adios_handler = CommandHandler('adios', adios)
+    dispatcher.add_handler(adios_handler)
 
     mensajeRecibido_handler = MessageHandler(Filters.text & (~Filters.command), mensajeRecibido)
     dispatcher.add_handler(mensajeRecibido_handler)
