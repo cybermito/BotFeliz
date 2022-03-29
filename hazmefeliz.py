@@ -1,4 +1,6 @@
 import logging
+
+from matplotlib import image
 from telegram.ext import Updater, CallbackContext, CommandHandler, MessageHandler, Filters
 from telegram import Update
 import requests
@@ -12,6 +14,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 updater = Updater(token=CYBERMITOTOKEN, use_context=True)
 dispatcher = updater.dispatcher
 
+
 #Definimos las funciones que se ejecutarán con los comandos /start, /adios, /help
 def start(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id, text="Hola, soy un bot en aprendizaje, dime algo y te responderé")
@@ -20,12 +23,22 @@ def start(update: Update, context: CallbackContext):
 
     if siEntrenado['status'] == 'ready to use':
         context.bot.send_message(chat_id=update.effective_chat.id, text="¿Que quieres decirme?")
-        
-        #texto = input('¿Que quieres decirme? ')
-    
+        update.message.reply_text(
+            'Probando la entrada de comandos\n\n'
+            '¿Eres chico o chica?',
+            reply_markup = ReplyKeyboardMarkup(
+                reply_keyboard, one_time_keyboard=True, input_field_placeholder='Chico o Chica?'
+            ),
+        )
+
+        return GENDER
+
     else:
-        context.bot.send_messsage(chat_id=update.effective_chat.id, text=siEntrenado)
-        print(siEntrenado)
+        #context.bot.send_message(chat_id=update.effective_chat.id, text=siEntrenado)
+        trainModel(API_KEY)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="No hay modelo de entrenamiento, generando uno nuevo...")
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Espera unos segundos y vuelve a escribir /start.")
+
 
 def help(update: Update, context: CallbackContext):
     mensaje="Este bot responde a las emociones que le crean las palabras o frases que se le diga"
@@ -45,24 +58,18 @@ def mensajeRecibido( update: Update, context:CallbackContext):
 
         if label == "cosas_buenas":
             context.bot.send_message(chat_id=update.effective_chat.id, text="Muchas gracias, eres muy agradable")
-            print("Muchas gracias, eres muy agradable")
-            img = Image.open('img/feliz.png')
-            #print(img) #<PIL.PngImagePlugin.PngImageFile image mode=RGB size=640x438 at 0x7F0D12A351F0>
-            debug=img.show()
-            #print(debug)
-
+            with open('img/feliz.jpg', 'rb') as imagen:
+                context.bot.sendPhoto(chat_id=update.effective_chat.id, photo=imagen)
+ 
         else:
             context.bot.send_message(chat_id=update.effective_chat.id, text="No me ha gustado lo que has dicho")
-            print("No me ha gustado lo que has dicho")
-            img = Image.open('img/triste.png')
-            #print(img)
-            debug=img.show()
-            #print(debug)
+            with open('img/triste.jpg', 'rb') as imagen:
+                context.bot.sendPhoto(chat_id=update.effective_chat.id, photo=imagen)
 
     texto = update.message.text
     print(texto)
     recognized = classify(texto)
-    if recognized != None:
+    if recognized != "noentendi":
         respuesta(recognized)
 
 
@@ -182,11 +189,12 @@ def classify(text):
         print(responseData)
         print()
         
-        if confidence['confidence'] >= 60:
+        if confidence['confidence'] >= 70:
             topMatch = responseData[0]
             return topMatch
 
         else:
+            return "noentendi"
             print("No entiendo la respuesta")
             ingresarNuevoEjemplo(text)
 
